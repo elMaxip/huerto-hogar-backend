@@ -1,8 +1,32 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/huerto-hogar-backend/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "builder": "rspack",
+    "tsConfigPath": "apps/huerto-hogar-backend/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/huerto-hogar-backend",
+  "projects": {
+    "huerto-hogar-backend": {
+      "type": "application",
+      "root": "apps/huerto-hogar-backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/huerto-hogar-backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/huerto-hogar-backend/tsconfig.app.json"
+      }
+    },
+    "users-service": {
+      "type": "application",
+      "root": "apps/users-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/users-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/users-service/tsconfig.app.json"
+      }
+    }
   }
 }
