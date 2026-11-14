@@ -10,6 +10,15 @@
   "monorepo": true,
   "root": "apps/huerto-hogar-backend",
   "projects": {
+    "contracts": {
+      "type": "library",
+      "root": "libs/contracts",
+      "entryFile": "index",
+      "sourceRoot": "libs/contracts/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/contracts/tsconfig.lib.json"
+      }
+    },
     "huerto-hogar-backend": {
       "type": "application",
       "root": "apps/huerto-hogar-backend",
