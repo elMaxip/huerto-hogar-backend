@@ -27,7 +27,8 @@
         "./libs/contracts/src/index.ts"
       ],
       "@app/contracts/*": [
-        "./libs/contracts/src/*"
+        "./libs/contracts/src/*",
+        "./libs/contracts/src/*/index.ts"
       ]
     }
   },
@@ -38,6 +39,9 @@
     },
     {
       "path": "./apps/users-service/tsconfig.app.json"
+    },
+    {
+      "path": "./apps/products-service/tsconfig.app.json"
     },
     {
       "path": "./tsconfig.spec.json"
