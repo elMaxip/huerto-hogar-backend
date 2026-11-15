@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity.js';
-import { Repository } from 'typeorm';
-import { GetUserDto, UserResponse } from '@app/contracts/users';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import {
+  GetUserByIdDto,
+  ROLES,
+  GetUserDto,
+  UpdateRefreshTokenDto,
+  UserCredentialsResponse,
+  UserResponse,
+  UserSessionResponse,
+} from '@app/contracts/users';
 import { CreateUserDto } from '@app/contracts/users';
 import { Role } from '../roles/entities/role.entity.js';
 import { UserNotFoundException } from '../exceptions/user-not-found-exception.js';
@@ -19,20 +27,34 @@ export class UsersService {
   ) {}
 
   async findOne(data: GetUserDto): Promise<UserResponse> {
-    const user = await this.usersRepository.findOne({
-      where: { email: data.email },
-      relations: {
-        role: true,
-      },
-    });
-    if (!user) throw new UserNotFoundException();
+    return this.toResponse(await this.findBy({ email: data.email }));
+  }
 
-    if (user.password != data.password) throw new UserNotFoundException();
-    return this.toResponse(user);
+  async findCredentials(data: GetUserDto): Promise<UserCredentialsResponse> {
+    const user = await this.findBy({ email: data.email });
+
+    return { ...this.toResponse(user), password: user.password };
+  }
+
+  async findSession(data: GetUserByIdDto): Promise<UserSessionResponse> {
+    const user = await this.findBy({ id: data.id });
+
+    return {
+      ...this.toResponse(user),
+      refreshTokenHash: user.refreshTokenHash,
+    };
+  }
+
+  async updateRefreshToken(data: UpdateRefreshTokenDto): Promise<void> {
+    const result = await this.usersRepository.update(data.id, {
+      refreshTokenHash: data.refreshTokenHash ?? null,
+    });
+
+    if (!result.affected) throw new UserNotFoundException();
   }
 
   async create(data: CreateUserDto): Promise<UserResponse> {
-    const role = await this.rolesRepository.findOneBy({ role: 'CLIENT' });
+    const role = await this.rolesRepository.findOneBy({ role: ROLES.CLIENT });
 
     if (!role) throw new RoleNotFoundException();
 
@@ -41,6 +63,18 @@ export class UsersService {
       role,
     });
     return this.toResponse(await this.usersRepository.save(user));
+  }
+
+  private async findBy(where: FindOptionsWhere<User>): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where,
+      relations: {
+        role: true,
+      },
+    });
+    if (!user) throw new UserNotFoundException();
+
+    return user;
   }
 
   private toResponse(user: User): UserResponse {

@@ -24,6 +24,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  refreshTokenHash: string | null;
+
   @ManyToOne(() => Role)
   role: Relation<Role>;
 

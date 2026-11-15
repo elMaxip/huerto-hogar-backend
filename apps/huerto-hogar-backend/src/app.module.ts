@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from './users/users.module.js';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { ProductsModule } from './products/products.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
@@ -9,8 +10,15 @@ import { ProductsModule } from './products/products.module.js';
       isGlobal: true,
       envFilePath: 'apps/huerto-hogar-backend/.env',
     }),
-    UsersModule,
+    JwtModule.registerAsync({
+      global: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      }),
+    }),
     ProductsModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

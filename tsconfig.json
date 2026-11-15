@@ -44,6 +44,9 @@
       "path": "./apps/products-service/tsconfig.app.json"
     },
     {
+      "path": "./apps/auth-service/tsconfig.app.json"
+    },
+    {
       "path": "./tsconfig.spec.json"
     }
   ]
