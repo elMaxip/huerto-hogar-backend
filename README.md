@@ -41,6 +41,25 @@ Los seeds no modifican registros que ya existen, así que se pueden ejecutar var
 | `seed:demo-users` | `admin@huertohogar.cl` / `admin1234` (admin) y `cliente@correo.cl` / `cliente123` (cliente). No corre con `NODE_ENV=production` |
 | `seed:products` | Categorías (`FR`, `VR`, `PO`, `PL`) y los 7 productos del catálogo inicial; sube sus imágenes al almacenamiento configurado |
 
+## Docker
+
+Solo requiere Docker. Levanta Postgres (con `users_db` y `products_db`), los 3 microservicios y el gateway; únicamente el gateway se publica en el host.
+
+```bash
+cp .env.docker.example .env   # completa POSTGRES_PASSWORD y los secretos JWT
+docker compose up -d --build  # API Gateway en http://localhost:3000
+docker compose logs -f migrate
+```
+
+En cada `docker compose up` se ejecuta primero el servicio `migrate` ([docker/migrate.sh](docker/migrate.sh)): aplica las migraciones pendientes de ambas bases y corre los seeds (roles, productos y, según `.env`, los usuarios demo con `SEED_DEMO_USERS=true` y el administrador de `ADMIN_EMAIL`/`ADMIN_PASSWORD`). Los servicios arrancan solo si termina sin errores. Como los seeds son idempotentes, volver a ejecutarlo no duplica datos.
+
+| Imagen | Uso |
+| --- | --- |
+| `huerto-backend` (target `runtime`) | Los 4 servicios; el `command` de cada uno elige qué `dist/apps/*/main.js` ejecutar |
+| `huerto-backend-migrate` (target `migrate`) | Migraciones y seeds con `ts-node` (incluye dependencias de desarrollo) |
+
+Los datos quedan en los volúmenes `pgdata` y `uploads`; `docker compose down -v` los borra.
+
 ## Endpoints (API Gateway)
 
 | Método | Ruta | Acceso | Descripción |

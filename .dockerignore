@@ -1,0 +1,13 @@
+**/node_modules
+dist
+uploads
+coverage
+.git
+.idea
+.vscode
+**/.env
+**/*.tsbuildinfo
+*.log
+Dockerfile
+docker-compose*.yml
+.dockerignore
