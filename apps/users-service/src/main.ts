@@ -1,8 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { UsersServiceModule } from './users-service.module.js';
+import { RpcException, Transport } from '@nestjs/microservices';
+import { ValidationError, ValidationPipe } from '@nestjs/common';
+import { RpcError } from '@app/contracts';
+
+function flattenErrors(errors: ValidationError[]): string[] {
+  return errors.flatMap((error) => [
+    ...Object.values(error.constraints ?? {}),
+    ...flattenErrors(error.children ?? []),
+  ]);
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create(UsersServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  const app = await NestFactory.createMicroservice(UsersServiceModule, {
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: 3001,
+    },
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      exceptionFactory: (errors) =>
+        new RpcException({
+          statusCode: 400,
+          message: flattenErrors(errors),
+        } satisfies RpcError),
+    }),
+  );
+
+  await app.listen();
 }
 await bootstrap();
