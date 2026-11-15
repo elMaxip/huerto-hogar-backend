@@ -26,9 +26,17 @@
     "seed:admin": "node --no-experimental-strip-types --loader ts-node/esm apps/users-service/src/database/seeds/admin.seed.ts",
     "migration:products:generate": "typeorm-ts-node-esm -d apps/products-service/src/database/data-source.ts migration:generate",
     "migration:products:run": "typeorm-ts-node-esm -d apps/products-service/src/database/data-source.ts migration:run",
-    "seed:products": "node --no-experimental-strip-types --loader ts-node/esm apps/products-service/src/database/seeds/categories.seed.ts"
+    "seed:products": "pnpm seed:categories && node --no-experimental-strip-types --loader ts-node/esm apps/products-service/src/database/seeds/products.seed.ts",
+    "start:users": "nest start users-service --watch",
+    "start:products": "nest start products-service --watch",
+    "start:auth": "nest start auth-service --watch",
+    "seed:categories": "node --no-experimental-strip-types --loader ts-node/esm apps/products-service/src/database/seeds/categories.seed.ts",
+    "seed:demo-users": "node --no-experimental-strip-types --loader ts-node/esm apps/users-service/src/database/seeds/demo-users.seed.ts",
+    "migration:run": "pnpm migration:users:run && pnpm migration:products:run",
+    "seed": "pnpm seed:users && pnpm seed:demo-users && pnpm seed:products"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1169.0",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.1.1",
     "@nestjs/core": "^12.0.1",
@@ -55,6 +63,7 @@
     "@rspack/core": "^2.1.10",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",

@@ -1,8 +1,11 @@
 import {
+  AdminCreateUserDto,
   CreateUserDto,
+  DeleteUserMessage,
   GetUserByIdDto,
   GetUserDto,
   UpdateRefreshTokenDto,
+  UpdateUserMessage,
   UserCredentialsResponse,
   UserResponse,
   USERS_PATTERNS,
@@ -41,5 +44,30 @@ export class UsersController {
   @MessagePattern(USERS_PATTERNS.UPDATE_REFRESH_TOKEN)
   updateRefreshToken(@Payload() payload: UpdateRefreshTokenDto): Promise<void> {
     return this.userService.updateRefreshToken(payload);
+  }
+
+  @MessagePattern(USERS_PATTERNS.FIND_ALL)
+  findAll(): Promise<UserResponse[]> {
+    return this.userService.findAll();
+  }
+
+  @MessagePattern(USERS_PATTERNS.FIND_BY_ID)
+  findById(@Payload() payload: GetUserByIdDto): Promise<UserResponse> {
+    return this.userService.findById(payload);
+  }
+
+  @MessagePattern(USERS_PATTERNS.CREATE_BY_ADMIN)
+  createByAdmin(@Payload() payload: AdminCreateUserDto): Promise<UserResponse> {
+    return this.userService.createByAdmin(payload);
+  }
+
+  @MessagePattern(USERS_PATTERNS.UPDATE)
+  update(@Payload() payload: UpdateUserMessage): Promise<UserResponse> {
+    return this.userService.update(payload);
+  }
+
+  @MessagePattern(USERS_PATTERNS.DELETE)
+  delete(@Payload() payload: DeleteUserMessage): Promise<void> {
+    return this.userService.delete(payload);
   }
 }

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Post,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -20,7 +21,14 @@ import {
   RefreshTokenDto,
 } from '@app/contracts/auth';
 import type { JwtPayload } from '@app/contracts/auth';
-import { CreateUserDto, UserResponse } from '@app/contracts/users';
+import {
+  CreateUserDto,
+  GetUserByIdDto,
+  UserResponse,
+  USERS_PATTERNS,
+} from '@app/contracts/users';
+import { RpcError } from '@app/contracts';
+import { USERS_SERVICE } from '../users/users.constants.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 
@@ -28,6 +36,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 export class AuthController {
   constructor(
     @Inject(AUTH_SERVICE) private readonly authClient: ClientProxy,
+    @Inject(USERS_SERVICE) private readonly usersClient: ClientProxy,
   ) {}
 
   @Post('register')
@@ -61,7 +70,19 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: JwtPayload): JwtPayload {
-    return user;
+  async me(@CurrentUser() user: JwtPayload): Promise<UserResponse> {
+    try {
+      return await firstValueFrom(
+        this.usersClient.send<UserResponse, GetUserByIdDto>(
+          USERS_PATTERNS.FIND_BY_ID,
+          { id: user.sub },
+        ),
+      );
+    } catch (error) {
+      if ((error as RpcError)?.statusCode === 404) {
+        throw new UnauthorizedException('La cuenta ya no existe');
+      }
+      throw error;
+    }
   }
 }

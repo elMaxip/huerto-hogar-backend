@@ -1,132 +1,115 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# HuertoHogar — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend de la tienda HuertoHogar con **NestJS** y microservicios. El frontend (`fullstack-ev-2`) solo habla con el API Gateway.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```
+navegador ──HTTP──▶ huerto-hogar-backend :3000 (API Gateway, JWT, CORS, subida de imágenes)
+                        │ TCP
+          ┌─────────────┼──────────────────────┐
+          ▼             ▼                      ▼
+   auth-service:3003  users-service:3001   products-service:3002
+   (tokens, hash)     (users_db)           (products_db)
+          └──TCP──▶ users-service
 ```
 
-## Compile and run the project
+`libs/contracts` tiene los DTOs y patrones de mensajes compartidos y `libs/storage` el almacenamiento de imágenes (disco local o S3).
+
+## Puesta en marcha
+
+Requisitos: Node.js, pnpm y PostgreSQL con las bases `users_db` y `products_db`.
 
 ```bash
-# development
-$ pnpm run start
+pnpm install
+# Copia cada apps/*/.env.example a .env y completa los valores
 
-# watch mode
-$ pnpm run start:dev
+pnpm migration:run   # migraciones de users_db y products_db
+pnpm seed            # roles, usuarios de prueba, categorías y productos (con sus imágenes)
+pnpm seed:admin      # opcional: administrador definido en ADMIN_EMAIL / ADMIN_PASSWORD
 
-# production mode
-$ pnpm run start:prod
+# Un proceso por servicio
+pnpm start:users
+pnpm start:products
+pnpm start:auth
+pnpm start:dev       # API Gateway en http://localhost:3000
 ```
 
-## Run tests
+Los seeds no modifican registros que ya existen, así que se pueden ejecutar varias veces.
+
+| Seed | Crea |
+| --- | --- |
+| `seed:users` | Roles `ADMIN` y `CLIENT` |
+| `seed:demo-users` | `admin@huertohogar.cl` / `admin1234` (admin) y `cliente@correo.cl` / `cliente123` (cliente). No corre con `NODE_ENV=production` |
+| `seed:products` | Categorías (`FR`, `VR`, `PO`, `PL`) y los 7 productos del catálogo inicial; sube sus imágenes al almacenamiento configurado |
+
+## Endpoints (API Gateway)
+
+| Método | Ruta | Acceso | Descripción |
+| --- | --- | --- | --- |
+| POST | `/auth/register` | Público | Crea una cuenta de cliente |
+| POST | `/auth/login` | Público | Devuelve `user`, `accessToken` y `refreshToken` |
+| POST | `/auth/refresh` | Público | Rota los tokens (`{ refreshToken }`) |
+| POST | `/auth/logout` | Sesión | Revoca el refresh token |
+| GET | `/auth/me` | Sesión | Datos actuales del usuario (rol incluido) |
+| GET | `/products` | Público | Catálogo. `?ids=FR001,VR002` devuelve solo esos |
+| GET | `/products/versions` | Público | `id` y `updatedAt` de cada producto, para validar la caché del cliente |
+| GET | `/products/:id` | Público | Un producto |
+| GET | `/categories` | Público | Categorías |
+| POST | `/products/images` | Admin | Sube una imagen (`multipart/form-data`, campo `image`, máx. 2 MB) y devuelve `{ key, url }` |
+| POST | `/products` | Admin | Crea un producto (`img` = `key` de la imagen). El código se genera por categoría: `FR004` |
+| PATCH | `/products/:id` | Admin | Edita un producto. `discount: 0` quita el descuento |
+| DELETE | `/products/:id` | Admin | Elimina el producto y su imagen |
+| GET | `/users` | Admin | Lista de usuarios |
+| GET | `/users/:id` | Admin | Un usuario |
+| POST | `/users` | Admin | Crea un usuario con rol `ADMIN` o `CLIENT` |
+| PATCH | `/users/:id` | Admin | Edita nombre, correo, rol o contraseña. Si cambian credenciales o rol, se revoca su sesión |
+| DELETE | `/users/:id` | Admin | Elimina un usuario (no la propia cuenta) |
+
+Las rutas de sesión y admin reciben `Authorization: Bearer <accessToken>`.
+
+### `updatedAt` de los productos
+
+La tabla `products` tiene `createdAt` y `updatedAt`. Un trigger de PostgreSQL (`TRG_products_updated_at`) actualiza `updatedAt` en cada `UPDATE`, venga de la API o de SQL directo. El frontend guarda el catálogo en IndexedDB y, con `GET /products/versions`, descarga solo los productos cuyo `updatedAt` cambió.
+
+## Imágenes: local y AWS S3
+
+En la base de datos se guarda solo la *key* (`products/<uuid>.webp`); la URL pública se arma con `ASSETS_BASE_URL`. Así se puede cambiar de bucket o poner CloudFront sin migrar datos.
+
+- **Desarrollo** (`STORAGE_DRIVER=local`): las imágenes van a `./uploads` y el gateway las sirve en `/uploads`.
+- **Producción** (`STORAGE_DRIVER=s3`): las imágenes van al bucket `S3_BUCKET`. El gateway sube y products-service borra las imágenes reemplazadas, así que **ambos** necesitan la misma configuración de almacenamiento.
+
+### Despliegue en EC2 + S3
+
+1. Crea el bucket (por ejemplo `huerto-hogar-imagenes`) y permite la lectura pública de `products/*`, o mejor, ponle delante una distribución de **CloudFront** con *Origin Access Control* y deja el bucket privado.
+2. Crea un **rol IAM** para la instancia EC2 con esta política y asígnalo a la instancia (no hace falta poner claves en el `.env`; el SDK usa el rol automáticamente):
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": ["s3:PutObject", "s3:DeleteObject"],
+         "Resource": "arn:aws:s3:::huerto-hogar-imagenes/products/*"
+       }
+     ]
+   }
+   ```
+
+3. En `apps/huerto-hogar-backend/.env` y `apps/products-service/.env`:
+
+   ```env
+   STORAGE_DRIVER=s3
+   S3_BUCKET=huerto-hogar-imagenes
+   AWS_REGION=us-east-1
+   ASSETS_BASE_URL=https://dxxxxxxxxxxxx.cloudfront.net   # o la URL del bucket
+   ```
+
+4. En el gateway define `CORS_ORIGINS` con los dominios del frontend, y compila el frontend con `VITE_API_URL` apuntando al gateway.
+5. Ejecuta `pnpm migration:run` y `pnpm seed:users && pnpm seed:products` (el seed de productos sube las 7 imágenes al bucket). En producción crea el administrador con `pnpm seed:admin` y una contraseña segura en lugar de `seed:demo-users`.
+
+## Pruebas
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm test     # vitest
+pnpm lint     # oxlint
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project, run this and approve the code it prints at [observe.nestjs.com/link](https://observe.nestjs.com/link) - signing up for free if you have no account:
-
-```bash
-$ npx @nestjs/observe link
-```
-
-It installs `@nestjs/observe`, wires it into `AppModule` and `main.ts`, and writes the app key and secret into `.env`, which every `nest start` script (`start`, `start:dev`, `start:debug`) then loads. In production, set `OBSERVE_APP_KEY` and `OBSERVE_APP_SECRET` in the environment instead.
-
-Or do it by hand:
-
-```bash
-$ pnpm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/sdk) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

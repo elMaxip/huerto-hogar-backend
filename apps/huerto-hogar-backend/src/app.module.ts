@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ProductsModule } from './products/products.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { UsersModule } from './users/users.module.js';
+import { StorageModule } from '@app/storage';
 
 @Module({
   imports: [
@@ -17,8 +19,10 @@ import { AuthModule } from './auth/auth.module.js';
         secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
       }),
     }),
+    StorageModule,
     ProductsModule,
     AuthModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],

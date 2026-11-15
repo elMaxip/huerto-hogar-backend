@@ -2,10 +2,13 @@ export interface ProductResponse {
   id: string;
   name: string;
   category: string;
+  categoryId: string;
   price: number;
   discount?: number;
   unidadVenta: string;
   img: string;
   stock: number;
   description: string;
+  createdAt: string;
+  updatedAt: string;
 }

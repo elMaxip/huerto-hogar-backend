@@ -29,6 +29,9 @@
       "@app/contracts/*": [
         "./libs/contracts/src/*",
         "./libs/contracts/src/*/index.ts"
+      ],
+      "@app/storage": [
+        "./libs/storage/src/index.ts"
       ]
     }
   },

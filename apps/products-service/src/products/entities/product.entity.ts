@@ -1,4 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import type { Relation } from 'typeorm';
 import { Category } from '../../categories/entities/category.entity.js';
 
@@ -16,8 +23,8 @@ export class Product {
   @Column()
   price: number;
 
-  @Column({ nullable: true })
-  discount?: number;
+  @Column({ type: 'integer', nullable: true })
+  discount: number | null;
 
   @Column()
   unidadVenta: string;
@@ -30,4 +37,10 @@ export class Product {
 
   @Column()
   description: string;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
 }

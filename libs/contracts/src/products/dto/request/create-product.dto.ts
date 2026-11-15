@@ -1,8 +1,7 @@
 import {
-  IsIn,
   IsInt,
   IsNotEmpty,
-  IsNumber,
+  IsOptional,
   IsString,
   Max,
   MaxLength,
@@ -30,8 +29,9 @@ export class CreateProductDto {
   @Max(99999999)
   price: number;
 
+  @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(100)
   discount?: number;
 
@@ -39,6 +39,7 @@ export class CreateProductDto {
   @IsNotEmpty()
   unidadVenta: string;
 
+  @MaxLength(500)
   @IsString()
   @IsNotEmpty()
   img: string;
@@ -47,6 +48,7 @@ export class CreateProductDto {
   @Min(0)
   stock: number;
 
+  @MaxLength(1000)
   @IsString()
   @IsNotEmpty()
   description: string;

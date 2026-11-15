@@ -3,9 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AUTH_SERVICE } from './auth.constants.js';
 import { AuthController } from './auth.controller.js';
+import { UsersClientModule } from '../users/users-client.module.js';
 
 @Module({
   imports: [
+    UsersClientModule,
     ClientsModule.registerAsync([
       {
         name: AUTH_SERVICE,

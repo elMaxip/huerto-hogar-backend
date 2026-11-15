@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PRODUCTS_SERVICE } from './products.constants.js';
 import { ProductsController } from './products.controller.js';
+import { CategoriesController } from './categories.controller.js';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { ProductsController } from './products.controller.js';
       },
     ]),
   ],
-  controllers: [ProductsController],
+  controllers: [ProductsController, CategoriesController],
 })
 export class ProductsModule {}
