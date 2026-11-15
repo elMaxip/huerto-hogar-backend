@@ -22,7 +22,10 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "migration:users:generate": "typeorm-ts-node-esm -d apps/users-service/src/database/data-source.ts migration:generate",
     "migration:users:run": "typeorm-ts-node-esm -d apps/users-service/src/database/data-source.ts migration:run",
-    "seed:users": "node --no-experimental-strip-types --loader ts-node/esm apps/users-service/src/database/seeds/roles.seed.ts"
+    "seed:users": "node --no-experimental-strip-types --loader ts-node/esm apps/users-service/src/database/seeds/roles.seed.ts",
+    "migration:products:generate": "typeorm-ts-node-esm -d apps/products-service/src/database/data-source.ts migration:generate",
+    "migration:products:run": "typeorm-ts-node-esm -d apps/products-service/src/database/data-source.ts migration:run",
+    "seed:products": "node --no-experimental-strip-types --loader ts-node/esm apps/products-service/src/database/seeds/categories.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

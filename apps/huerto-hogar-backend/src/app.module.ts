@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module.js';
+import { ProductsModule } from './products/products.module.js';
 
 @Module({
   imports: [
@@ -9,6 +10,7 @@ import { UsersModule } from './users/users.module.js';
       envFilePath: 'apps/huerto-hogar-backend/.env',
     }),
     UsersModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
